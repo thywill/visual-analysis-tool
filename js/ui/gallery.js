@@ -1,13 +1,16 @@
+import { openDeepAnalysis } from "./deep.js";
+
 let galleryView = null;
 let galleryGrid = null;
 let galleryCountEl = null;
+let galleryImages = [];
 
 function formatImageCount(count) {
   return count === 1 ? "1 image" : `${count} images`;
 }
 
-function openDeepAnalysis(imageId) {
-  console.log(imageId);
+function handleOpenDeepAnalysis(imageId) {
+  openDeepAnalysis(imageId, galleryImages);
 }
 
 function createGalleryCard(image) {
@@ -55,7 +58,7 @@ function createGalleryCard(image) {
     if (event.target.closest(".gallery-card__checkbox")) {
       return;
     }
-    openDeepAnalysis(image.id);
+    handleOpenDeepAnalysis(image.id);
   });
 
   return card;
@@ -138,6 +141,8 @@ export function renderGallery(images) {
   if (!galleryView || !galleryGrid) {
     initGallery();
   }
+
+  galleryImages = images;
 
   const uploadZone = document.getElementById("upload-zone");
   if (uploadZone) {

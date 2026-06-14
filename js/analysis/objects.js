@@ -37,11 +37,76 @@ function getLabelColor(label) {
   return labelColorCache.get(label);
 }
 
-function findImageContainer(imageId) {
-  const card = document.querySelector(
-    `.gallery-card[data-id="${String(imageId)}"]`,
+function findImageContainers(imageId) {
+  const id = String(imageId);
+  const containers = [];
+
+  const deepWrap = document.querySelector(
+    `.deep-analysis__image-wrap[data-image-id="${id}"]`,
   );
-  return card?.querySelector(".gallery-card__image-wrap");
+  if (deepWrap) {
+    containers.push(deepWrap);
+  }
+
+  const dataCanvas = document.querySelector(
+    `.deep-analysis__data-canvas[data-image-id="${id}"]`,
+  );
+  if (dataCanvas) {
+    containers.push(dataCanvas);
+  }
+
+  const card = document.querySelector(`.gallery-card[data-id="${id}"]`);
+  const galleryWrap = card?.querySelector(".gallery-card__image-wrap");
+  if (galleryWrap) {
+    containers.push(galleryWrap);
+  }
+
+  return containers;
+}
+
+function findImageContainer(imageId) {
+  return findImageContainers(imageId)[0] ?? null;
+}
+
+function drawBoundingBoxes(container, results, dimensionSource) {
+  const image = dimensionSource ?? container.querySelector("img");
+  if (!image || !results?.length) {
+    return;
+  }
+
+  const existingLayer = container.querySelector(".bounding-boxes");
+  if (existingLayer) {
+    existingLayer.remove();
+  }
+
+  const layer = document.createElement("div");
+  layer.className = "bounding-boxes";
+
+  for (const result of results) {
+    const percentBox = boxToPercentages(result.box, image);
+    if (!percentBox) {
+      continue;
+    }
+
+    const color = getLabelColor(result.label);
+    const boxEl = document.createElement("div");
+    boxEl.className = "bounding-box";
+    boxEl.style.left = `${percentBox.left}%`;
+    boxEl.style.top = `${percentBox.top}%`;
+    boxEl.style.width = `${percentBox.width}%`;
+    boxEl.style.height = `${percentBox.height}%`;
+    boxEl.style.borderColor = color;
+
+    const labelEl = document.createElement("span");
+    labelEl.className = "bounding-box__label";
+    labelEl.textContent = `${result.label} ${result.score}`;
+    labelEl.style.backgroundColor = color;
+
+    boxEl.appendChild(labelEl);
+    layer.appendChild(boxEl);
+  }
+
+  container.appendChild(layer);
 }
 
 function boxToPercentages(box, image) {
@@ -96,60 +161,44 @@ export async function detectObjects(imageSrc, options) {
 }
 
 export function clearBoundingBoxes(imageId) {
-  const container = findImageContainer(imageId);
-  if (!container) {
-    return;
-  }
-
-  const layer = container.querySelector(".bounding-boxes");
-  if (layer) {
-    layer.remove();
+  for (const container of findImageContainers(imageId)) {
+    const layer = container.querySelector(".bounding-boxes");
+    if (layer) {
+      layer.remove();
+    }
   }
 }
 
-export function renderBoundingBoxes(imageId, results, showImage) {
-  const container = findImageContainer(imageId);
-  if (!container) {
+export function renderBoundingBoxes(
+  imageId,
+  results,
+  showImage,
+  targetContainer = null,
+  dimensionSource = null,
+) {
+  if (!showImage || !results?.length) {
+    if (targetContainer) {
+      const layer = targetContainer.querySelector(".bounding-boxes");
+      if (layer) {
+        layer.remove();
+      }
+    } else {
+      clearBoundingBoxes(imageId);
+    }
+    return;
+  }
+
+  if (targetContainer) {
+    drawBoundingBoxes(targetContainer, results, dimensionSource);
     return;
   }
 
   clearBoundingBoxes(imageId);
 
-  if (!showImage || !results?.length) {
+  const container = findImageContainer(imageId);
+  if (!container) {
     return;
   }
 
-  const image = container.querySelector("img");
-  if (!image) {
-    return;
-  }
-
-  const layer = document.createElement("div");
-  layer.className = "bounding-boxes";
-
-  for (const result of results) {
-    const percentBox = boxToPercentages(result.box, image);
-    if (!percentBox) {
-      continue;
-    }
-
-    const color = getLabelColor(result.label);
-    const boxEl = document.createElement("div");
-    boxEl.className = "bounding-box";
-    boxEl.style.left = `${percentBox.left}%`;
-    boxEl.style.top = `${percentBox.top}%`;
-    boxEl.style.width = `${percentBox.width}%`;
-    boxEl.style.height = `${percentBox.height}%`;
-    boxEl.style.borderColor = color;
-
-    const labelEl = document.createElement("span");
-    labelEl.className = "bounding-box__label";
-    labelEl.textContent = `${result.label} ${result.score}`;
-    labelEl.style.backgroundColor = color;
-
-    boxEl.appendChild(labelEl);
-    layer.appendChild(boxEl);
-  }
-
-  container.appendChild(layer);
+  drawBoundingBoxes(container, results, dimensionSource);
 }

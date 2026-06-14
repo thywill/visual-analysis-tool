@@ -1,6 +1,7 @@
 import { loadModel, isModelReady, modelStatus } from "./models.js";
-import { initGallery, renderGallery } from "./ui/gallery.js";
+import { initGallery, renderGallery, getSelectedImages } from "./ui/gallery.js";
 import { initSidebar } from "./ui/sidebar.js";
+import { openCompareView } from "./ui/compare.js";
 
 export let uploadedImages = [];
 
@@ -53,6 +54,20 @@ function initUploadHandlers() {
   uploadButton.addEventListener("click", () => {
     fileInput.click();
   });
+
+  const compareButton = document.getElementById("btn-compare");
+  if (compareButton) {
+    compareButton.addEventListener("click", () => {
+      const selectedIds = getSelectedImages();
+
+      if (selectedIds.length < 2) {
+        alert("Select at least 2 images to compare");
+        return;
+      }
+
+      openCompareView(selectedIds, uploadedImages);
+    });
+  }
 
   uploadZone.addEventListener("click", () => {
     fileInput.click();
