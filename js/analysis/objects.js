@@ -1,0 +1,155 @@
+import { loadModel, getModel } from "../models.js";
+
+const LABEL_COLORS = [
+  "#e6194b",
+  "#3cb44b",
+  "#4363d8",
+  "#f58231",
+  "#911eb4",
+  "#42d4f4",
+  "#f032e6",
+  "#469990",
+  "#9a6324",
+  "#800000",
+  "#808000",
+  "#000075",
+];
+
+const labelColorCache = new Map();
+
+function hashLabel(label) {
+  let hash = 0;
+
+  for (let i = 0; i < label.length; i += 1) {
+    hash = (hash << 5) - hash + label.charCodeAt(i);
+    hash |= 0;
+  }
+
+  return Math.abs(hash);
+}
+
+function getLabelColor(label) {
+  if (!labelColorCache.has(label)) {
+    const index = hashLabel(label) % LABEL_COLORS.length;
+    labelColorCache.set(label, LABEL_COLORS[index]);
+  }
+
+  return labelColorCache.get(label);
+}
+
+function findImageContainer(imageId) {
+  const card = document.querySelector(
+    `.gallery-card[data-id="${String(imageId)}"]`,
+  );
+  return card?.querySelector(".gallery-card__image-wrap");
+}
+
+function boxToPercentages(box, image) {
+  const width = image.naturalWidth || image.width;
+  const height = image.naturalHeight || image.height;
+
+  if (!width || !height) {
+    return null;
+  }
+
+  const isNormalized =
+    box.xmin >= 0 &&
+    box.ymin >= 0 &&
+    box.xmax <= 1 &&
+    box.ymax <= 1;
+
+  if (isNormalized) {
+    return {
+      left: box.xmin * 100,
+      top: box.ymin * 100,
+      width: (box.xmax - box.xmin) * 100,
+      height: (box.ymax - box.ymin) * 100,
+    };
+  }
+
+  return {
+    left: (box.xmin / width) * 100,
+    top: (box.ymin / height) * 100,
+    width: ((box.xmax - box.xmin) / width) * 100,
+    height: ((box.ymax - box.ymin) / height) * 100,
+  };
+}
+
+export async function detectObjects(imageSrc, options) {
+  const { threshold, maxObjects } = options;
+
+  await loadModel("objectDetector");
+  const model = getModel("objectDetector");
+
+  const rawResults = await model(imageSrc, { threshold });
+
+  return rawResults.slice(0, maxObjects).map((item) => ({
+    label: item.label,
+    score: Math.round(item.score * 100) / 100,
+    box: {
+      xmin: item.box.xmin,
+      ymin: item.box.ymin,
+      xmax: item.box.xmax,
+      ymax: item.box.ymax,
+    },
+  }));
+}
+
+export function clearBoundingBoxes(imageId) {
+  const container = findImageContainer(imageId);
+  if (!container) {
+    return;
+  }
+
+  const layer = container.querySelector(".bounding-boxes");
+  if (layer) {
+    layer.remove();
+  }
+}
+
+export function renderBoundingBoxes(imageId, results, showImage) {
+  const container = findImageContainer(imageId);
+  if (!container) {
+    return;
+  }
+
+  clearBoundingBoxes(imageId);
+
+  if (!showImage || !results?.length) {
+    return;
+  }
+
+  const image = container.querySelector("img");
+  if (!image) {
+    return;
+  }
+
+  const layer = document.createElement("div");
+  layer.className = "bounding-boxes";
+
+  for (const result of results) {
+    const percentBox = boxToPercentages(result.box, image);
+    if (!percentBox) {
+      continue;
+    }
+
+    const color = getLabelColor(result.label);
+    const boxEl = document.createElement("div");
+    boxEl.className = "bounding-box";
+    boxEl.style.left = `${percentBox.left}%`;
+    boxEl.style.top = `${percentBox.top}%`;
+    boxEl.style.width = `${percentBox.width}%`;
+    boxEl.style.height = `${percentBox.height}%`;
+    boxEl.style.borderColor = color;
+
+    const labelEl = document.createElement("span");
+    labelEl.className = "bounding-box__label";
+    labelEl.textContent = `${result.label} ${result.score}`;
+    labelEl.style.backgroundColor = color;
+
+    boxEl.appendChild(labelEl);
+    layer.appendChild(boxEl);
+  }
+
+  container.appendChild(layer);
+}
