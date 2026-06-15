@@ -1,12 +1,18 @@
-import { detectObjects } from "../analysis/objects.js";
+import { detectObjects, groupObjectsByLabel } from "../analysis/objects.js";
 import { extractColors } from "../analysis/color.js";
 import { generateCaption } from "../analysis/caption.js";
 import { analyzeComposition } from "../analysis/composition.js";
 import { detectEmotion, shouldRunEmotion } from "../analysis/emotion.js";
 import { getSettings } from "./sidebar.js";
 import { returnToGallery } from "./deep.js";
+import {
+  analysisStore,
+  exportToCSV,
+  storeAnalysisResult,
+} from "../utils/export.js";
 
 let compareView = null;
+let comparedImages = [];
 
 function escapeHtml(value) {
   return String(value)
@@ -90,12 +96,14 @@ function renderObjectsMetric(objects, sharedLabels) {
     return "<p class=\"compare-metric__empty\">No objects detected.</p>";
   }
 
-  const items = objects
-    .map((object) => {
-      const isShared = sharedLabels.has(object.label.toLowerCase());
+  const groupedObjects = groupObjectsByLabel(objects);
+  const items = groupedObjects
+    .map((group) => {
+      const isShared = sharedLabels.has(group.label.toLowerCase());
+      const countLabel = group.count > 1 ? ` (${group.count})` : "";
+
       return `<li class="compare-object-item${isShared ? " compare-object-item--shared" : ""}">
-        <span class="compare-object-item__label">${escapeHtml(object.label)}</span>
-        <span class="compare-object-item__score">${object.score}</span>
+        <span class="compare-object-item__label">${escapeHtml(group.label)}${countLabel} avg: ${group.avgScore}</span>
       </li>`;
     })
     .join("");
@@ -321,9 +329,15 @@ async function runCompareAnalysis(images, analysisSettings, parameters) {
   const sharedLabels = findSharedObjectLabels(resultsByImage);
 
   images.forEach((image, index) => {
+    const results = {
+      ...resultsByImage[index],
+      analyzedAt: new Date().toISOString(),
+    };
+
+    storeAnalysisResult(image.id, results);
     updateColumnMetrics(
       image,
-      resultsByImage[index],
+      results,
       sharedLabels,
       analysisSettings,
     );
@@ -335,6 +349,8 @@ export function returnToGalleryFromCompare() {
     compareView.remove();
     compareView = null;
   }
+
+  comparedImages = [];
 
   const galleryView = document.getElementById("gallery-view");
   if (galleryView) {
@@ -366,6 +382,8 @@ export function openCompareView(selectedIds, images) {
     galleryView.classList.add("hidden");
   }
 
+  comparedImages = selectedImages;
+
   compareView = document.createElement("div");
   compareView.id = "compare-view";
   compareView.className = "compare-view";
@@ -374,6 +392,7 @@ export function openCompareView(selectedIds, images) {
     <div class="compare-view__header">
       <button type="button" class="btn btn--secondary compare-view__back" id="btn-back-from-compare">Back to gallery</button>
       <h2 class="compare-view__title">Comparing ${selectedImages.length} images</h2>
+      <button type="button" class="btn btn--secondary compare-view__export" id="btn-export-compare-csv">Export CSV</button>
     </div>
     <div class="compare-view__scroll">
       <div class="compare-grid"></div>
@@ -393,6 +412,12 @@ export function openCompareView(selectedIds, images) {
   compareView
     .querySelector("#btn-back-from-compare")
     .addEventListener("click", returnToGalleryFromCompare);
+
+  compareView
+    .querySelector("#btn-export-compare-csv")
+    .addEventListener("click", () => {
+      exportToCSV(comparedImages, analysisStore);
+    });
 
   mainContent.appendChild(compareView);
   runCompareAnalysis(selectedImages, analysisSettings, parameters);

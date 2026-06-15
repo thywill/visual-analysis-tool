@@ -737,9 +737,19 @@ button {
 }
 
 .deep-analysis__filename {
+  flex: 1;
+  min-width: 0;
   font-size: 15px;
   font-weight: 500;
+  line-height: 1.3;
   color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deep-analysis__export {
+  flex-shrink: 0;
 }
 
 .deep-analysis__body {
@@ -925,9 +935,15 @@ button {
 }
 
 .compare-view__title {
+  flex: 1;
+  min-width: 0;
   font-size: 15px;
   font-weight: 500;
   color: var(--color-text);
+}
+
+.compare-view__export {
+  flex-shrink: 0;
 }
 
 .compare-view__scroll {

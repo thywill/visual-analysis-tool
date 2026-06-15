@@ -160,6 +160,39 @@ export async function detectObjects(imageSrc, options) {
   }));
 }
 
+export function groupObjectsByLabel(objects) {
+  if (!objects?.length) {
+    return [];
+  }
+
+  const groups = new Map();
+
+  for (const object of objects) {
+    const key = object.label.toLowerCase();
+    const existing = groups.get(key);
+
+    if (existing) {
+      existing.scores.push(object.score);
+    } else {
+      groups.set(key, {
+        label: object.label,
+        scores: [object.score],
+      });
+    }
+  }
+
+  return Array.from(groups.values()).map((group) => {
+    const avgScore =
+      group.scores.reduce((sum, score) => sum + score, 0) / group.scores.length;
+
+    return {
+      label: group.label,
+      count: group.scores.length,
+      avgScore: Math.round(avgScore * 100) / 100,
+    };
+  });
+}
+
 export function clearBoundingBoxes(imageId) {
   for (const container of findImageContainers(imageId)) {
     const layer = container.querySelector(".bounding-boxes");

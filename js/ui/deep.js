@@ -2,6 +2,7 @@ import {
   detectObjects,
   renderBoundingBoxes,
   clearBoundingBoxes,
+  groupObjectsByLabel,
 } from "../analysis/objects.js";
 import {
   extractColors,
@@ -23,6 +24,11 @@ import {
   shouldRunEmotion,
 } from "../analysis/emotion.js";
 import { getSettings } from "./sidebar.js";
+import {
+  exportSingleImageReport,
+  getAnalysisResult,
+  storeAnalysisResult,
+} from "../utils/export.js";
 
 let deepView = null;
 let currentImage = null;
@@ -43,14 +49,15 @@ function formatObjectResults(results) {
     return "<p class=\"deep-analysis__muted\">No objects detected.</p>";
   }
 
-  const items = results
-    .map(
-      (item) =>
-        `<li class="deep-analysis__object-item">
-          <span class="deep-analysis__object-label">${item.label}</span>
-          <span class="deep-analysis__object-score">${item.score}</span>
-        </li>`,
-    )
+  const groupedObjects = groupObjectsByLabel(results);
+  const items = groupedObjects
+    .map((group) => {
+      const countLabel = group.count > 1 ? ` (${group.count})` : "";
+
+      return `<li class="deep-analysis__object-item">
+          <span class="deep-analysis__object-label">${group.label}${countLabel} avg: ${group.avgScore}</span>
+        </li>`;
+    })
     .join("");
 
   return `<ul class="deep-analysis__object-list">${items}</ul>`;
@@ -179,6 +186,7 @@ function buildDeepAnalysisLayout(image, analysisSettings) {
     <div class="deep-analysis__header">
       <button type="button" class="btn btn--secondary deep-analysis__back" id="btn-back-to-gallery">Back to gallery</button>
       <h2 class="deep-analysis__filename">${image.name}</h2>
+      <button type="button" class="btn btn--secondary deep-analysis__export" id="btn-export-deep">Export report</button>
     </div>
     <div class="deep-analysis__body">
       <div class="deep-analysis__visual">
@@ -215,6 +223,17 @@ function buildDeepAnalysisLayout(image, analysisSettings) {
 
   deepView.querySelector("#btn-back-to-gallery").addEventListener("click", () => {
     returnToGallery();
+  });
+
+  deepView.querySelector("#btn-export-deep").addEventListener("click", () => {
+    if (!currentImage) {
+      return;
+    }
+
+    exportSingleImageReport(
+      currentImage,
+      getAnalysisResult(currentImage.id),
+    );
   });
 
   for (const tab of deepView.querySelectorAll(".deep-analysis__tab")) {
@@ -257,6 +276,15 @@ export function returnToGallery() {
 
 export async function runAnalysis(image) {
   const { analysisSettings, parameters } = getSettings();
+  const analysisResult = {
+    caption: null,
+    colors: null,
+    objects: null,
+    composition: null,
+    emotion: null,
+    analyzedAt: new Date().toISOString(),
+  };
+
   currentObjectResults = [];
   currentColors = [];
 
@@ -266,6 +294,7 @@ export async function runAnalysis(image) {
         threshold: parameters.confidence,
         maxObjects: parameters.maxObjects,
       });
+      analysisResult.objects = currentObjectResults;
 
       const refImage = deepView?.querySelector(".deep-analysis__image");
       const imageWrap = deepView?.querySelector(".deep-analysis__image-wrap");
@@ -299,6 +328,7 @@ export async function runAnalysis(image) {
       extractColors(image.src, parameters.colorsToExtract)
         .then((colors) => {
           currentColors = colors;
+          analysisResult.colors = colors;
           renderColorStrip(image.id, colors);
           renderDataViewColorStrip(colors);
           updateSection("color", renderColorResults(colors));
@@ -316,6 +346,7 @@ export async function runAnalysis(image) {
     parallelTasks.push(
       generateCaption(image.src)
         .then((caption) => {
+          analysisResult.caption = caption;
           updateGalleryCaption(image.id, caption);
           updateSection("caption", renderCaptionResult(caption));
         })
@@ -335,6 +366,7 @@ export async function runAnalysis(image) {
   if (analysisSettings.composition) {
     try {
       const composition = await analyzeComposition(image.src);
+      analysisResult.composition = composition;
       updateSection("composition", renderCompositionResults(composition));
     } catch {
       updateSection(
@@ -348,6 +380,7 @@ export async function runAnalysis(image) {
     if (shouldRunEmotion(currentObjectResults)) {
       try {
         const emotionResults = await detectEmotion(image.src);
+        analysisResult.emotion = emotionResults;
         updateSection("emotion", renderEmotionResults(emotionResults));
       } catch {
         updateSection(
@@ -356,12 +389,19 @@ export async function runAnalysis(image) {
         );
       }
     } else {
+      analysisResult.emotion = {
+        primaryEmotion: "No face detected",
+        primaryScore: 0,
+        allEmotions: [],
+      };
       updateSection(
         "emotion",
         "<p class=\"deep-analysis__muted\">No person detected — emotion analysis skipped.</p>",
       );
     }
   }
+
+  storeAnalysisResult(image.id, analysisResult);
 }
 
 export function openDeepAnalysis(imageId, images) {
