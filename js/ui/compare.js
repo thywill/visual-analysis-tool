@@ -1,4 +1,9 @@
-import { detectObjects, groupObjectsByLabel, renderBoundingBoxes } from "../analysis/objects.js";
+import {
+  detectObjects,
+  formatObjectScore,
+  groupObjectsByLabel,
+  renderBoundingBoxes,
+} from "../analysis/objects.js";
 import { extractColors } from "../analysis/color.js";
 import { generateCaption } from "../analysis/caption.js";
 import { analyzeComposition } from "../analysis/composition.js";
@@ -465,7 +470,7 @@ function renderObjectsMetric(objects, sharedLabels) {
       const countLabel = group.count > 1 ? ` (${group.count})` : "";
 
       return `<li class="compare-object-item${isShared ? " compare-object-item--shared" : ""}">
-        <span class="compare-object-item__label">${escapeHtml(group.label)}${countLabel} avg: ${group.avgScore}</span>
+        <span class="compare-object-item__label">${escapeHtml(group.label)}${countLabel} avg: ${formatObjectScore(group.avgScore)}</span>
       </li>`;
     })
     .join("");

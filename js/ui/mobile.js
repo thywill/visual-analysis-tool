@@ -1,7 +1,7 @@
 import { extractColors } from "../analysis/color.js";
 import {
   detectObjects,
-  getLabelColor,
+  formatObjectScore,
   groupObjectsByLabel,
   renderBoundingBoxes,
   clearBoundingBoxes,
@@ -142,16 +142,54 @@ function renderObjectsSection(objects) {
   const grouped = groupObjectsByLabel(objects);
   const badges = grouped
     .map((group) => {
-      const color = getLabelColor(group.label);
+      const toneClass = getMobileObjectToneClass(group.avgScore);
+      const label = escapeHtml(group.label);
+      const badgeText = `${label} (${group.count}) avg: ${formatObjectScore(group.avgScore)}`;
+
+      if (group.count === 1) {
+        return `
+          <span class="mobile-object-badge ${toneClass}">
+            ${badgeText}
+          </span>
+        `;
+      }
+
+      const detections = group.detections
+        .map((detection, index) => {
+          const detectionToneClass = getMobileObjectToneClass(detection.score);
+          return `
+            <li class="mobile-object-detection ${detectionToneClass}">
+              <span>${label} ${index + 1} &mdash; ${formatObjectScore(detection.score)}</span>
+            </li>
+          `;
+        })
+        .join("");
+
       return `
-        <span class="mobile-object-badge" style="background-color: ${color}22; border-color: ${color}; color: ${color}">
-          ${escapeHtml(group.label)} (${group.count}) avg: ${group.avgScore}
-        </span>
+        <details class="mobile-object-details">
+          <summary class="mobile-object-badge ${toneClass}">
+            <span>${badgeText}</span>
+            <span class="mobile-object-chevron" aria-hidden="true">›</span>
+          </summary>
+          <ul class="mobile-object-detections">${detections}</ul>
+        </details>
       `;
     })
     .join("");
 
   return `<div class="mobile-object-badges">${badges}</div>`;
+}
+
+function getMobileObjectToneClass(score) {
+  if (score > 0.75) {
+    return "mobile-object-badge--green";
+  }
+
+  if (score >= 0.5) {
+    return "mobile-object-badge--amber";
+  }
+
+  return "mobile-object-badge--red";
 }
 
 function renderCompositionSection(composition) {

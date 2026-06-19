@@ -37,6 +37,15 @@ function getLabelColor(label) {
   return labelColorCache.get(label);
 }
 
+function normalizeScore(score) {
+  const value = Number(score);
+  return Number.isFinite(value) ? value : 0;
+}
+
+function formatObjectScore(score) {
+  return normalizeScore(score).toFixed(2);
+}
+
 function findImageContainers(imageId) {
   const id = String(imageId);
   const containers = [];
@@ -103,7 +112,7 @@ function drawBoundingBoxes(container, results, dimensionSource) {
 
     const labelEl = document.createElement("span");
     labelEl.className = "bounding-box__label";
-    labelEl.textContent = `${result.label} ${result.score}`;
+    labelEl.textContent = `${result.label} ${formatObjectScore(result.score)}`;
     labelEl.style.backgroundColor = color;
 
     boxEl.appendChild(labelEl);
@@ -156,10 +165,14 @@ export async function detectObjects(imageSrc, options) {
   console.log(
     `[TIMING] objects: ${((performance.now() - _tObj) / 1000).toFixed(2)}s`,
   );
+  console.log(
+    "[OBJECTS] raw scores:",
+    rawResults.map((item) => ({ label: item.label, score: item.score })),
+  );
 
   return rawResults.slice(0, maxObjects).map((item) => ({
     label: item.label,
-    score: Math.round(item.score * 100) / 100,
+    score: normalizeScore(item.score),
     box: {
       xmin: item.box.xmin,
       ymin: item.box.ymin,
@@ -179,25 +192,31 @@ export function groupObjectsByLabel(objects) {
   for (const object of objects) {
     const key = object.label.toLowerCase();
     const existing = groups.get(key);
+    const detection = {
+      label: object.label,
+      score: normalizeScore(object.score),
+    };
 
     if (existing) {
-      existing.scores.push(object.score);
+      existing.detections.push(detection);
     } else {
       groups.set(key, {
         label: object.label,
-        scores: [object.score],
+        detections: [detection],
       });
     }
   }
 
   return Array.from(groups.values()).map((group) => {
     const avgScore =
-      group.scores.reduce((sum, score) => sum + score, 0) / group.scores.length;
+      group.detections.reduce((sum, detection) => sum + detection.score, 0) /
+      group.detections.length;
 
     return {
       label: group.label,
-      count: group.scores.length,
-      avgScore: Math.round(avgScore * 100) / 100,
+      count: group.detections.length,
+      avgScore,
+      detections: group.detections,
     };
   });
 }
@@ -245,4 +264,8 @@ export function renderBoundingBoxes(
   drawBoundingBoxes(container, results, dimensionSource);
 }
 
-export { boxToPercentages as convertBoxToPercentages, getLabelColor };
+export {
+  boxToPercentages as convertBoxToPercentages,
+  formatObjectScore,
+  getLabelColor,
+};

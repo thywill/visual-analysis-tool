@@ -3,6 +3,7 @@ import {
   renderBoundingBoxes,
   clearBoundingBoxes,
   groupObjectsByLabel,
+  formatObjectScore,
 } from "../analysis/objects.js";
 import {
   extractColors,
@@ -75,6 +76,15 @@ const MODEL_LABELS = {
   emotionDetector: "emotion detection",
   sceneClassifier: "scene classification",
 };
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 function sectionLoadingHtml(message) {
   return `<div class="section-loading">
@@ -153,20 +163,50 @@ function formatObjectResults(results) {
   const groupedObjects = groupObjectsByLabel(results);
   const items = groupedObjects
     .map((group) => {
-      let toneClass = "deep-analysis__object-badge--red";
-      if (group.avgScore > 0.75) {
-        toneClass = "deep-analysis__object-badge--green";
-      } else if (group.avgScore >= 0.5) {
-        toneClass = "deep-analysis__object-badge--amber";
+      const toneClass = getObjectToneClass(group.avgScore);
+      const label = escapeHtml(group.label);
+      const badgeText = `${label} (${group.count}) avg: ${formatObjectScore(group.avgScore)}`;
+
+      if (group.count === 1) {
+        return `<li class="deep-analysis__object-item">
+          <span class="deep-analysis__object-badge ${toneClass}">${badgeText}</span>
+        </li>`;
       }
 
+      const detections = group.detections
+        .map((detection, index) => {
+          const detectionToneClass = getObjectToneClass(detection.score);
+          return `<li class="deep-analysis__object-detection ${detectionToneClass}">
+            <span>${label} ${index + 1} &mdash; ${formatObjectScore(detection.score)}</span>
+          </li>`;
+        })
+        .join("");
+
       return `<li class="deep-analysis__object-item">
-          <span class="deep-analysis__object-badge ${toneClass}">${group.label} (${group.count}) avg: ${group.avgScore}</span>
+          <details class="deep-analysis__object-details">
+            <summary class="deep-analysis__object-badge ${toneClass}">
+              <span>${badgeText}</span>
+              <span class="deep-analysis__object-chevron" aria-hidden="true">›</span>
+            </summary>
+            <ul class="deep-analysis__object-detections">${detections}</ul>
+          </details>
         </li>`;
     })
     .join("");
 
   return `<ul class="deep-analysis__object-list">${items}</ul>`;
+}
+
+function getObjectToneClass(score) {
+  if (score > 0.75) {
+    return "deep-analysis__object-badge--green";
+  }
+
+  if (score >= 0.5) {
+    return "deep-analysis__object-badge--amber";
+  }
+
+  return "deep-analysis__object-badge--red";
 }
 
 function updateSection(sectionKey, html) {
