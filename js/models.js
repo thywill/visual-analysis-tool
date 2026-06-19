@@ -13,18 +13,24 @@ const MODEL_CONFIG = {
     task: "image-classification",
     model: "Xenova/facial-emotion-recognition",
   },
+  sceneClassifier: {
+    task: "image-classification",
+    model: "Xenova/vit-base-patch16-224",
+  },
 };
 
 const models = {
   objectDetector: null,
   captioner: null,
   emotionDetector: null,
+  sceneClassifier: null,
 };
 
 export const modelStatus = {
   objectDetector: "idle",
   captioner: "idle",
   emotionDetector: "idle",
+  sceneClassifier: "idle",
 };
 
 const loadingPromises = {};
@@ -66,10 +72,18 @@ export async function loadModel(modelName) {
 
   setModelStatus(modelName, "loading");
 
-  loadingPromises[modelName] = pipeline(config.task, config.model)
+  // EXPERIMENT
+  const _tStart = performance.now();
+  console.log(`[TIMING] ${modelName}: loading started`);
+  loadingPromises[modelName] = pipeline(config.task, config.model, {
+    quantized: true,
+  })
     .then((instance) => {
       models[modelName] = instance;
       setModelStatus(modelName, "ready");
+      console.log(
+        `[TIMING] ${modelName}: ready in ${((performance.now() - _tStart) / 1000).toFixed(2)}s`,
+      );
       return instance;
     })
     .catch((error) => {

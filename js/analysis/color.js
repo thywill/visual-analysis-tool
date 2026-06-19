@@ -135,6 +135,8 @@ export async function extractColors(imageSrc, colorCount) {
   const context = canvas.getContext("2d", { willReadFrequently: true });
   context.drawImage(image, 0, 0, width, height);
 
+  // EXPERIMENT
+  const _tCol = performance.now();
   const { data } = context.getImageData(0, 0, width, height);
   const colorCounts = new Map();
   let sampledPixels = 0;
@@ -159,6 +161,9 @@ export async function extractColors(imageSrc, colorCount) {
   }
 
   if (sampledPixels === 0) {
+    console.log(
+      `[TIMING] color: ${((performance.now() - _tCol) / 1000).toFixed(2)}s`,
+    );
     return [];
   }
 
@@ -178,6 +183,9 @@ export async function extractColors(imageSrc, colorCount) {
       };
     });
 
+  console.log(
+    `[TIMING] color: ${((performance.now() - _tCol) / 1000).toFixed(2)}s`,
+  );
   return rankedColors;
 }
 

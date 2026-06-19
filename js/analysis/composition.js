@@ -84,6 +84,8 @@ export async function analyzeComposition(imageSrc) {
   const width = Math.max(1, Math.round(image.width * scale));
   const height = Math.max(1, Math.round(image.height * scale));
 
+  // EXPERIMENT
+  const _tComp = performance.now();
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
@@ -171,6 +173,9 @@ export async function analyzeComposition(imageSrc) {
     current.average > brightest.average ? current : brightest,
   ).region;
 
+  console.log(
+    `[TIMING] composition: ${((performance.now() - _tComp) / 1000).toFixed(2)}s`,
+  );
   return {
     orientation: getOrientation(image.width, image.height),
     aspectRatio: getClosestAspectRatio(image.width, image.height),

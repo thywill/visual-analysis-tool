@@ -40,15 +40,55 @@ function extractGeneratedText(output) {
   return "";
 }
 
+function isMobileDevice() {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+}
+
 export async function generateCaption(imageSrc) {
+  const preview =
+    typeof imageSrc === "string" ? imageSrc.substring(0, 50) : String(imageSrc);
+  console.log("Caption input type:", typeof imageSrc, preview);
+
   try {
     await loadModel("captioner");
     const model = getModel("captioner");
-    const output = await model(imageSrc);
-    const caption = cleanCaption(extractGeneratedText(output));
+    // EXPERIMENT
+    const _tCap = performance.now();
+    const inferencePromise = model(imageSrc, { max_new_tokens: 50 });
+    let output;
 
-    return caption || FALLBACK_CAPTION;
-  } catch {
+    if (isMobileDevice()) {
+      let timeoutId = null;
+      const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = globalThis.setTimeout(() => {
+          reject(new Error("Caption timeout"));
+        }, 30000);
+      });
+      try {
+        output = await Promise.race([inferencePromise, timeoutPromise]);
+      } finally {
+        if (timeoutId) {
+          globalThis.clearTimeout(timeoutId);
+        }
+      }
+    } else {
+      output = await inferencePromise;
+    }
+    console.log(
+      `[TIMING] caption: ${((performance.now() - _tCap) / 1000).toFixed(2)}s`,
+    );
+
+    console.log("Caption raw output:", JSON.stringify(output));
+    const captionText = cleanCaption(extractGeneratedText(output));
+    console.log(`[TIMING] caption text: "${captionText}"`);
+
+    return captionText || FALLBACK_CAPTION;
+  } catch (err) {
+    console.log("Caption error:", err?.message, err?.stack);
     return FALLBACK_CAPTION;
   }
 }

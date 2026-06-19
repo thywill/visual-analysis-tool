@@ -89,8 +89,12 @@ function drawBoundingBoxes(container, results, dimensionSource) {
     }
 
     const color = getLabelColor(result.label);
+    const isPerson = result.label.toLowerCase() === "person";
     const boxEl = document.createElement("div");
     boxEl.className = "bounding-box";
+    if (isPerson) {
+      boxEl.classList.add("bounding-box--person");
+    }
     boxEl.style.left = `${percentBox.left}%`;
     boxEl.style.top = `${percentBox.top}%`;
     boxEl.style.width = `${percentBox.width}%`;
@@ -146,7 +150,12 @@ export async function detectObjects(imageSrc, options) {
   await loadModel("objectDetector");
   const model = getModel("objectDetector");
 
+  // EXPERIMENT
+  const _tObj = performance.now();
   const rawResults = await model(imageSrc, { threshold });
+  console.log(
+    `[TIMING] objects: ${((performance.now() - _tObj) / 1000).toFixed(2)}s`,
+  );
 
   return rawResults.slice(0, maxObjects).map((item) => ({
     label: item.label,
@@ -235,3 +244,5 @@ export function renderBoundingBoxes(
 
   drawBoundingBoxes(container, results, dimensionSource);
 }
+
+export { boxToPercentages as convertBoxToPercentages, getLabelColor };

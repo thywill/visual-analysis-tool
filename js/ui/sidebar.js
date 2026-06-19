@@ -105,6 +105,18 @@ export function getSettings() {
   return { analysisSettings, parameters };
 }
 
+function dispatchSettingsChanged(changed) {
+  window.dispatchEvent(
+    new CustomEvent("settings-changed", {
+      detail: {
+        analysisSettings: { ...analysisSettings },
+        parameters: { ...parameters },
+        changed,
+      },
+    }),
+  );
+}
+
 export function initSidebar() {
   for (const toggleId of Object.keys(TOGGLE_MAP)) {
     const toggle = document.getElementById(toggleId);
@@ -113,7 +125,13 @@ export function initSidebar() {
     }
 
     syncToggleSetting(toggleId);
-    toggle.addEventListener("change", () => syncToggleSetting(toggleId));
+    toggle.addEventListener("change", () => {
+      syncToggleSetting(toggleId);
+      dispatchSettingsChanged({
+        toggles: [TOGGLE_MAP[toggleId]],
+        parameters: [],
+      });
+    });
   }
 
   for (const sliderId of Object.keys(SLIDER_MAP)) {
@@ -123,11 +141,23 @@ export function initSidebar() {
     }
 
     syncSliderSetting(sliderId);
-    slider.addEventListener("input", () => syncSliderSetting(sliderId));
+    slider.addEventListener("input", () => {
+      syncSliderSetting(sliderId);
+      dispatchSettingsChanged({
+        toggles: [],
+        parameters: [SLIDER_MAP[sliderId]],
+      });
+    });
   }
 
   const resetButton = document.getElementById("btn-reset-defaults");
   if (resetButton) {
-    resetButton.addEventListener("click", resetDefaults);
+    resetButton.addEventListener("click", () => {
+      resetDefaults();
+      dispatchSettingsChanged({
+        toggles: Object.values(TOGGLE_MAP),
+        parameters: Object.values(SLIDER_MAP),
+      });
+    });
   }
 }

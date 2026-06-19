@@ -11,9 +11,27 @@
     <h1 class="top-nav__title">Visual Analysis Tool</h1>
     <nav class="top-nav__actions" aria-label="Primary actions">
       <button type="button" id="btn-upload" class="btn btn--primary">Upload Images</button>
-      <button type="button" id="btn-compare" class="btn btn--secondary">Compare Selected</button>
+      <button type="button" id="btn-camera" class="btn btn--secondary top-nav__icon-btn" aria-label="Capture image">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+      </button>
+      <button type="button" id="btn-compare" class="btn btn--secondary top-nav__compare">Compare Selected</button>
     </nav>
   </header>
+
+  <div class="mobile-top-bar" id="mobile-top-bar">
+    <span class="mobile-top-bar__title">Visual Analysis Tool</span>
+    <button
+      type="button"
+      id="mobile-top-settings-btn"
+      class="btn btn--secondary mobile-top-bar__settings"
+      aria-label="Open analysis settings"
+    >
+      ⚙️
+    </button>
+  </div>
 
   <div class="app-layout">
     <aside id="sidebar" class="sidebar" aria-label="Analysis controls">
@@ -81,7 +99,7 @@
                 name="analysis-emotion"
               >
               <span class="toggle__switch" aria-hidden="true"></span>
-              <span class="toggle__label">Emotion</span>
+              <span class="toggle__label">Emotion (Portraits)</span>
             </label>
           </li>
           <li class="toggle-list__item">
@@ -183,6 +201,50 @@
       </div>
     </main>
   </div>
+
+  <div id="mobile-settings-overlay" class="mobile-settings-overlay"></div>
+  <section id="mobile-settings-sheet" class="mobile-settings-sheet" aria-label="Analysis Settings">
+    <div class="mobile-settings-sheet__handle" aria-hidden="true"></div>
+    <h2 class="mobile-settings-sheet__title">Analysis Settings</h2>
+    <ul class="mobile-settings-sheet__toggles">
+      <li class="toggle-list__item">
+        <label class="toggle" for="mobile-toggle-objects">
+          <input type="checkbox" id="mobile-toggle-objects" class="toggle__input" name="mobile-analysis-objects">
+          <span class="toggle__switch" aria-hidden="true"></span>
+          <span class="toggle__label">Objects</span>
+        </label>
+      </li>
+      <li class="toggle-list__item">
+        <label class="toggle" for="mobile-toggle-color">
+          <input type="checkbox" id="mobile-toggle-color" class="toggle__input" name="mobile-analysis-color">
+          <span class="toggle__switch" aria-hidden="true"></span>
+          <span class="toggle__label">Color</span>
+        </label>
+      </li>
+      <li class="toggle-list__item">
+        <label class="toggle" for="mobile-toggle-caption">
+          <input type="checkbox" id="mobile-toggle-caption" class="toggle__input" name="mobile-analysis-caption">
+          <span class="toggle__switch" aria-hidden="true"></span>
+          <span class="toggle__label">Caption</span>
+        </label>
+      </li>
+      <li class="toggle-list__item">
+        <label class="toggle" for="mobile-toggle-composition">
+          <input type="checkbox" id="mobile-toggle-composition" class="toggle__input" name="mobile-analysis-composition">
+          <span class="toggle__switch" aria-hidden="true"></span>
+          <span class="toggle__label">Composition</span>
+        </label>
+      </li>
+      <li class="toggle-list__item">
+        <label class="toggle" for="mobile-toggle-emotion">
+          <input type="checkbox" id="mobile-toggle-emotion" class="toggle__input" name="mobile-analysis-emotion">
+          <span class="toggle__switch" aria-hidden="true"></span>
+          <span class="toggle__label">Emotion</span>
+        </label>
+      </li>
+    </ul>
+    <button type="button" id="mobile-settings-done" class="btn btn--primary mobile-settings-sheet__done">Done</button>
+  </section>
 
   <script type="module" src="js/main.js"></script>
 </body>
