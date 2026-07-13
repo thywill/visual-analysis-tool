@@ -112,9 +112,9 @@ visual-analysis-tool/
 
 ## GenAI Statement
 
-Generative AI tools were used as coding assistance during development for brainstorming, debugging, code improvement, and documentation support. The work followed a vibe coding framework: features were developed through an iterative cycle of describing the intended interaction, generating or revising code with AI assistance, testing the result in the browser, and refining the implementation based on observed behavior.
+Generative AI tools were used as coding assistance during development for brainstorming, debugging, code improvement, and documentation support. The project followed a vibe coding workflow, where I described the intended visual experience, shared or created screen references to communicate layout ideas, explained the desired user interactions, tested the generated code in the browser, and refined the result through iteration.
 
-Prompt engineering was used to guide the AI tools toward the project goals, including browser-based privacy, use of Transformers.js models, responsive desktop/mobile layouts, clear visual analysis outputs, and readable code organization. The final implementation, project decisions, and submitted code were reviewed and edited by the author.
+Prompts were used to guide the AI tools toward the project goals. This included describing expected visual outputs, providing visual references, explaining user interaction flows, and using negative prompts to clarify what the tool should avoid. These prompts helped guide browser-based privacy, use of Transformers.js models, responsive desktop and mobile layouts, visual analysis outputs, comparison features, and readable code organization. The final implementation, design decisions, and submitted code were reviewed, tested, and edited by the author.
 
 ## Credits
 
