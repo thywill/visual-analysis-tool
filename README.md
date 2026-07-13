@@ -24,17 +24,15 @@ The project uses browser-based JavaScript and client-side machine learning model
 
 ## Screenshots
 
-Add screenshots before publishing to GitHub:
+### Desktop Detail View
 
-- Desktop screenshot: `screenshots/desktop.png`
-- Mobile screenshot: `screenshots/mobile.png`
+![Desktop detail view](screenshots/desktop-detail-view.png)
 
-Example Markdown once screenshots are added:
+### Desktop Compare View
 
-```md
-![Desktop view](screenshots/desktop.png)
-![Mobile view](screenshots/mobile.png)
-```
+![Desktop compare view](screenshots/desktop-compare-view.png)
+
+Mobile screenshots are not included yet.
 
 ## Getting Started
 
