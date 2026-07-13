@@ -1,6 +1,6 @@
 # Visual Analysis Tool
 
-A browser-based visual analysis tool built with HTML, CSS, and JavaScript. The project is based on a collection and exploration of browser-ready AI models from Hugging Face Transformers.js, using them to test how object detection, image captioning, emotion detection, and scene classification can support visual research and comparison.
+A browser-based visual analysis tool built with HTML, CSS, and JavaScript. The project is an exploration of browser-ready AI models from Hugging Face Transformers.js, using them to test how object detection, image captioning, emotion detection, and scene classification can support visual research and comparison.
 
 ## Overview
 
