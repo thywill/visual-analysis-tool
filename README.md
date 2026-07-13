@@ -1,6 +1,6 @@
 # Visual Analysis Tool
 
-A browser-based visual analysis tool built with HTML, CSS, and JavaScript. It lets users upload or capture images, run lightweight visual analysis in the browser, compare multiple images, and export results for further review.
+A browser-based visual analysis tool built with HTML, CSS, and JavaScript. The project is based on a collection and exploration of browser-ready AI models from Hugging Face Transformers.js, using them to test how object detection, image captioning, emotion detection, and scene classification can support visual research and comparison.
 
 ## Overview
 
@@ -32,7 +32,15 @@ The project uses browser-based JavaScript and client-side machine learning model
 
 ![Desktop compare view](screenshots/desktop-compare-view.png)
 
-Mobile screenshots are not included yet.
+### Mobile View
+
+![Mobile view](screenshots/mobile-view.png)
+
+## Presentation
+
+The project presentation PDF is included in this repository:
+
+[Visual Analysis Tool Presentation](docs/visual-analysis-tool-presentation.pdf)
 
 ## Getting Started
 
@@ -83,6 +91,8 @@ On mobile, the app provides camera and upload buttons, a compact results view, a
 visual-analysis-tool/
 ├── index.html              Main HTML entry point
 ├── package.json            Project metadata and npm scripts
+├── docs/                   Project presentation and documentation files
+├── screenshots/            README screenshots
 ├── style/
 │   └── main.css            App layout, desktop, and mobile styles
 └── js/
@@ -102,7 +112,9 @@ visual-analysis-tool/
 
 ## GenAI Statement
 
-Generative AI tools were used as coding assistance during development for brainstorming, debugging, code improvement, and documentation support. The final implementation, project decisions, and submitted code were reviewed and edited by the author.
+Generative AI tools were used as coding assistance during development for brainstorming, debugging, code improvement, and documentation support. The work followed a vibe coding framework: features were developed through an iterative cycle of describing the intended interaction, generating or revising code with AI assistance, testing the result in the browser, and refining the implementation based on observed behavior.
+
+Prompt engineering was used to guide the AI tools toward the project goals, including browser-based privacy, use of Transformers.js models, responsive desktop/mobile layouts, clear visual analysis outputs, and readable code organization. The final implementation, project decisions, and submitted code were reviewed and edited by the author.
 
 ## Credits
 
